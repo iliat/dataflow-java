@@ -45,6 +45,7 @@ import com.google.cloud.dataflow.sdk.values.TupleTag;
 import com.google.cloud.genomics.dataflow.readers.bam.BAMIO;
 import com.google.cloud.genomics.dataflow.readers.bam.ReadBAMTransform;
 import com.google.cloud.genomics.dataflow.readers.bam.ReaderOptions;
+import com.google.cloud.genomics.dataflow.readers.bam.ShardingPolicy;
 import com.google.cloud.genomics.dataflow.utils.DataflowWorkarounds;
 import com.google.cloud.genomics.dataflow.utils.GCSOptions;
 import com.google.cloud.genomics.dataflow.utils.GenomicsDatasetOptions;
@@ -192,18 +193,19 @@ public class ShardedBAMWriting {
     return result;
   }
   
-  private static PCollection<Read> getReadsFromBAMFile() {
+  private static PCollection<Read> getReadsFromBAMFile() throws IOException {
     LOG.info("Sharded reading of "+ options.getBAMFilePath());
     
     final ReaderOptions readerOptions = new ReaderOptions(
-        ValidationStringency.DEFAULT_STRINGENCY,
+        ValidationStringency.LENIENT,
         true);
    
     return ReadBAMTransform.getReadsFromBAMFilesSharded(p,
         auth,
         contigs,
         readerOptions,
-        Collections.singletonList(options.getBAMFilePath()));
+        options.getBAMFilePath(),
+        ShardingPolicy.BYTE_SIZE_POLICY);
   }
   
   public static class ShardReadsTransform extends PTransform<PCollection<Read>, 
